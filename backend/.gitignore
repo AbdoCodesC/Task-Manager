@@ -1,0 +1,13 @@
+.venv
+*.pyc
+*.pyo
+*.pyd
+
+.env
+.env.example
+.env.development
+.env.production
+
+.DS_Store
+
+*.log
