@@ -1,6 +1,6 @@
 from flask import Blueprint, jsonify, request
 from services.user_service import create_user_logic, get_user_by_email_logic
-from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, unset_jwt_cookies, set_access_cookies, unset_access_cookies, unset_refresh_cookies
+from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, unset_jwt_cookies, set_access_cookies, unset_access_cookies, unset_refresh_cookies, get_jwt_identity
 from db import db
 from app.app import log
 
@@ -55,6 +55,13 @@ def login():
   set_access_cookies(response, access_token)
   return response, 200
 
+@auth_bp.route('/refresh', methods=['POST'])
+def refresh():
+  current_user_id = get_jwt_identity()
+  new_access_token = create_access_token(identity=current_user_id)
+  response = jsonify({'access_token': new_access_token})
+  set_access_cookies(response, new_access_token)
+  return response, 200
 
 # Logout
 @auth_bp.route('/logout', methods=['POST'])

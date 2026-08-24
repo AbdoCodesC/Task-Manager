@@ -1,5 +1,6 @@
 # source: https://flask.palletsprojects.com/en/stable/patterns/sqlalchemy/
 import os
+from datetime import timedelta
 from flask import Flask
 import logging as log
 from db import db
@@ -17,6 +18,7 @@ def create_app():
   app.config['SQLALCHEMY_DATABASE_URI'] = 'sqlite:///task_manager.db'
   app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
   app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET", 'secret') 
+  app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
   
   jwt_manager.init_app(app)
   bcrypt.init_app(app)
@@ -33,7 +35,6 @@ def create_app():
   
   with app.app_context():
     db.create_all()
-    print('Tables created!')
   
   return app
 

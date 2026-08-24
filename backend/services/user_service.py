@@ -16,7 +16,7 @@ def create_user_logic(data):
     return None, {'error': error}, 400 
   
   if email_exists(email):
-    return None, {"message": "Email already exists."}, 400 #TODO: FIX THIS
+    return None, {"message": "Email already exists."}, 400
 
   hashed_password = hash_password(password)
   
