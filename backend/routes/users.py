@@ -1,18 +1,19 @@
 from flask import Blueprint, request, jsonify
 from model import User
 from db import db
-from app import log, ma
+from app.extensions import ma
+from app.app import log
 from schema import user_update_schema
-from project.Task_Manager.backend.utils.user_helper import email_exists, hash_password
-from services.user_service import create_user_logic, get_user_by_email_logic
+from utils.user_helper import email_exists, hash_password
+from services.user_service import create_user_logic
 # from flask_login import login_required, current_user
-from utils.auth_helpers import get_current_user_id, get_current_user
+from utils.auth_helpers import get_current_user
 from flask_jwt_extended import jwt_required
 
 user_bp = Blueprint('users', __name__)
 
 # get all users - admin OR create user
-@user_bp.route('/users')
+@user_bp.route('/')
 @jwt_required()
 def get_users():
   user = get_current_user()
@@ -24,7 +25,7 @@ def get_users():
   return jsonify({'users': [user.to_dict() for user in users]}), 200
 
 # get one user
-@user_bp.route('/users/<int:id>')
+@user_bp.route('/<int:id>')
 @jwt_required()
 def get_user(id):
   current_user = get_current_user()
@@ -48,7 +49,7 @@ def get_user_by_email():
 '''
 
 # create user - use for (signup) auth
-@user_bp.route('/users', methods=['POST'])
+@user_bp.route('/', methods=['POST'])
 def create_user():
   data = request.get_json()
   if not data:
@@ -68,7 +69,7 @@ def create_user():
   return jsonify({'message': 'User created successfully.', 'user': user.to_dict()}), 201
     
 # update user #TODO
-@user_bp.route('/users/<int:id>', methods=['PATCH'])
+@user_bp.route('/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_user(id):
   data = request.get_json()
@@ -102,7 +103,7 @@ def update_user(id):
   return jsonify({'message':'User updated successfully','user': user.to_dict()}), 200
   
 # delete user
-@user_bp.route('/users/<int:id>', methods=['DELETE'])
+@user_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_user(id):
   user = db.get_or_404(User, id)

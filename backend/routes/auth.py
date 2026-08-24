@@ -1,9 +1,8 @@
-from flask import Blueprint, session, jsonify, request
-from routes import users
+from flask import Blueprint, jsonify, request
 from services.user_service import create_user_logic, get_user_by_email_logic
 from flask_jwt_extended import create_access_token, create_refresh_token, jwt_required, unset_jwt_cookies, set_access_cookies, unset_access_cookies, unset_refresh_cookies
 from db import db
-from app import log
+from app.app import log
 
 auth_bp = Blueprint('auth', __name__)
 
@@ -43,6 +42,7 @@ def login():
   
   user, error, status = get_user_by_email_logic(email)
   if error:
+    print('here!')
     return jsonify({'message': 'Invalid email or password'}), status
 
   if not user.check_password(password):

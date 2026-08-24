@@ -3,8 +3,8 @@ from sqlalchemy import String, ForeignKey, Enum as sqlalchemyEnum, func, DateTim
 from typing import Optional
 from datetime import datetime
 import enum
-from model.user import User
-from db import db
+# from model.user import User
+from model.base import Base
 
 class TaskPriority(enum.Enum):
   HIGH = 'high'
@@ -28,7 +28,7 @@ class TaskStatus(enum.Enum):
 task - id, title, duration, created_at, priority
 '''
 
-class Task(db.Model):
+class Task(Base):
   __tablename__ = 'tasks'
   id: Mapped[int] = mapped_column(primary_key=True)
   title: Mapped[str] = mapped_column(String(100))
@@ -42,8 +42,8 @@ class Task(db.Model):
   updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
   completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
   
-  user_id: Mapped[int] = mapped_column(ForeignKey('user.id'))
-  user: Mapped['User'] = relationship(back_populates='tasks')
+  user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+  user: Mapped["User"] = relationship(back_populates='task')
   
   def __repr__(self) -> str:
     duration_str = f" duration=({self.computed_duration()})" if self.computed_duration() else ""

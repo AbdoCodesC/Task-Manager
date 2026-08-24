@@ -1,5 +1,5 @@
 from marshmallow import ValidationError
-from backend.schema import user_schema
+from schema import user_schema
 
 try:
     result = user_schema.load({"id": 1, "email": "foo"})

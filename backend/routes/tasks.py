@@ -3,13 +3,14 @@ from flask import Blueprint, jsonify, request
 from schema import task_schema, task_update_schema
 from flask_jwt_extended import jwt_required
 from db import db
-from app import log, ma
+from app.app import log
+from app.extensions import ma
 from utils.auth_helpers import get_current_user_id
 
 task_bp = Blueprint('tasks', __name__)
 
 # get all tasks by user id
-@task_bp.route('/tasks')
+@task_bp.route('/')
 @jwt_required()
 def get_tasks():
   # get current_user id
@@ -24,7 +25,7 @@ def get_tasks():
   return jsonify(task_schema.dump(tasks, many=True)), 200
 
 # get certain task by user id
-@task_bp.route('/tasks/<int:id>')
+@task_bp.route('/<int:id>')
 @jwt_required()
 def get_task(id):
   user_id = get_current_user_id()
@@ -36,7 +37,7 @@ def get_task(id):
   return jsonify(task_schema.dump(task)), 200
 
 # create task by user id
-@task_bp.route('/tasks', methods=['POST'])
+@task_bp.route('/', methods=['POST'])
 @jwt_required()
 def create_task():
   data = request.get_json()
@@ -62,7 +63,7 @@ def create_task():
   return jsonify({'message':'Task created successfully', 'task': task_schema.dump(task)}), 201
 
 # update task by user id
-@task_bp.route('/tasks/<int:id>', methods=['PATCH'])
+@task_bp.route('/<int:id>', methods=['PATCH'])
 @jwt_required()
 def update_task(id):
   data = request.get_json()
@@ -92,7 +93,7 @@ def update_task(id):
   return jsonify({'message': 'Task updated successfully', 'task': task_schema.dump(task)}), 200
 
 # delete task by user id
-@task_bp.route('/tasks/<int:id>', methods=['DELETE'])
+@task_bp.route('/<int:id>', methods=['DELETE'])
 @jwt_required()
 def delete_task(id):
   task = db.session.execute(db.select(Task).where(Task.user_id == get_current_user_id(), Task.id == id)).scalar_one_or_none()

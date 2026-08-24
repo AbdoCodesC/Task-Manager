@@ -1,5 +1,5 @@
 from schema import user_schema
-from utils import email_exists, hash_password
+from utils.user_helper import email_exists, hash_password
 from model import User
 
 def create_user_logic(data):
@@ -9,7 +9,7 @@ def create_user_logic(data):
   last_name = data.get('last_name').strip()
   email = data.get('email').lower().strip()
   password = data.get('password').strip()
-  if not all(first_name, last_name, email, password):
+  if not all([first_name, last_name, email, password]):
     return None, {'message': 'All fields are required'}, 400
   error = user_schema.validate({"first_name": first_name, "last_name": last_name, "email": email, "password": password})
   if error:
@@ -27,7 +27,9 @@ def create_user_logic(data):
 def get_user_by_email_logic(email):
   if not email:
     return None, {'message': 'Email is required'}, 400
+  
   user = email_exists(email)
+  print(user)
   if not user:
     return None, {'message': 'User not found'}, 404
   
