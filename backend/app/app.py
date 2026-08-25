@@ -7,6 +7,7 @@ from db import db
 from routes import user_bp, task_bp, auth_bp, health_bp
 from dotenv import load_dotenv
 from app.extensions import bcrypt, jwt_manager, migrate, ma
+from flask_cors import CORS
 
 load_dotenv()
 
@@ -19,6 +20,8 @@ def create_app():
   app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
   app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET", 'secret') 
   app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
+  CORS(app, origins=["http://localhost:5173"])
+  
   
   jwt_manager.init_app(app)
   bcrypt.init_app(app)

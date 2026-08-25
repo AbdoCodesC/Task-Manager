@@ -19,7 +19,7 @@ def signup():
     db.session.commit()
   except Exception as e:
     log.error(f'Error creating user: {str(e)}')
-    return jsonify({'message': 'Signup failed'}), 500
+    return jsonify({'error': 'Signup failed'}), 500
   
   # login_user(user)
   access_token = create_access_token(identity=str(user.id))
@@ -34,19 +34,19 @@ def signup():
 def login():
   data = request.get_json()
   if not data:
-    return jsonify({'message': 'No data provided'}), 400
+    return jsonify({'error': 'No data provided'}), 400
   email = data.get('email', '')
   password = data.get('password', '')
   if not email or not password:
-    return jsonify({'message': 'Email and password are required'}), 400
+    return jsonify({'error': 'Email and password are required'}), 400
   
   user, error, status = get_user_by_email_logic(email)
   if error:
     print('here!')
-    return jsonify({'message': 'Invalid email or password'}), status
+    return jsonify({'error': 'Invalid email or password'}), status
 
   if not user.check_password(password):
-    return jsonify({'message': 'Invalid email or password'}), 401
+    return jsonify({'error': 'Invalid email or password'}), 401
   
   # both email and pass valid
   access_token = create_access_token(identity=str(user.id))

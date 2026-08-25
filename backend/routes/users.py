@@ -18,7 +18,7 @@ user_bp = Blueprint('users', __name__)
 def get_users():
   user = get_current_user()
   if not user.is_admin():
-    return jsonify({'message':'Unauthorized'}), 403
+    return jsonify({'error':'Unauthorized'}), 403
   users = db.session.execute(db.select(User).order_by(User.id)).scalars().all()
   if not users:
     return jsonify({'users':[]}), 200
@@ -31,7 +31,7 @@ def get_user(id):
   current_user = get_current_user()
   user = db.get_or_404(User, id)
   if not current_user or (current_user.id != user.id and not current_user.is_admin()):
-    return jsonify({'message': 'Unauthorized'}), 403
+    return jsonify({'error': 'Unauthorized'}), 403
   return jsonify({'user': user.to_dict()}), 200
 
 '''
@@ -53,7 +53,7 @@ def get_user_by_email():
 def create_user():
   data = request.get_json()
   if not data:
-    return jsonify({'message': 'No data provided'}), 400
+    return jsonify({'error': 'No data provided'}), 400
   user, error, status = create_user_logic(data)
   if error:
     return jsonify({"error": error}), status 
@@ -64,7 +64,7 @@ def create_user():
   except Exception as e:
     db.session.rollback()
     log.error(f'Error creating user {user.id}: {str(e)}')
-    return jsonify({'message': 'An error occured while creating the user'}), 500
+    return jsonify({'error': 'An error occured while creating the user'}), 500
   
   return jsonify({'message': 'User created successfully.', 'user': user.to_dict()}), 201
     
@@ -74,16 +74,16 @@ def create_user():
 def update_user(id):
   data = request.get_json()
   if not data:
-    return jsonify({'message': 'No data provided'}), 400
+    return jsonify({'error': 'No data provided'}), 400
   
   user = db.get_or_404(User, id)
   current_user = get_current_user()
   if not current_user or (current_user.id != user.id and not current_user.is_admin()):
-    return jsonify({'message': 'Unauthorized'}), 403
+    return jsonify({'error': 'Unauthorized'}), 403
     
   if 'email' in data:
     if data['email'] != user.email and email_exists(data['email']):
-      return jsonify({'message':'Email already exists'}), 400
+      return jsonify({'error':'Email already exists'}), 400
   
   try:
     user = user_update_schema.load(data, instance=user)
@@ -99,7 +99,7 @@ def update_user(id):
   except Exception as e:
     db.session.rollback()
     log.error(f'Error updating user {user.id}: {str(e)}')
-    return jsonify({'message': 'An error occured while updating the user'}), 500
+    return jsonify({'error': 'An error occured while updating the user'}), 500
   return jsonify({'message':'User updated successfully','user': user.to_dict()}), 200
   
 # delete user
@@ -109,7 +109,7 @@ def delete_user(id):
   user = db.get_or_404(User, id)
   current_user = get_current_user()
   if not current_user or (current_user.id != user.id and not current_user.is_admin()):
-    return jsonify({'message': 'Unauthorized'}), 403
+    return jsonify({'error': 'Unauthorized'}), 403
     
   try:
     db.session.delete(user)
@@ -117,6 +117,6 @@ def delete_user(id):
   except Exception as e:
     db.session.rollback()
     log.error(f'Error deleting user {user.id}: {str(e)}')
-    return jsonify({'message': 'An error occured while deleting the user'}), 500
+    return jsonify({'error': 'An error occured while deleting the user'}), 500
     
   return '', 204

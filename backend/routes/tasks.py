@@ -16,7 +16,7 @@ def get_tasks():
   # get current_user id
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'message': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'User not logged in, try to login first.'}), 401
   
   tasks = db.session.execute(db.select(Task).where(Task.user_id == user_id).order_by(Task.id)).scalars().all()
   if not tasks:
@@ -30,10 +30,10 @@ def get_tasks():
 def get_task(id):
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'message': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'User not logged in, try to login first.'}), 401
   task = db.session.execute(db.select(Task).where(Task.user_id == user_id, Task.id == id)).scalar_one_or_none()
   if not task:
-    return jsonify({'message': 'Task not found'}), 404
+    return jsonify({'error': 'Task not found'}), 404
   return jsonify(task_schema.dump(task)), 200
 
 # create task by user id
@@ -42,10 +42,10 @@ def get_task(id):
 def create_task():
   data = request.get_json()
   if not data:
-    return jsonify({'message': 'No data provided'}), 400
+    return jsonify({'error': 'No data provided'}), 400
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'message': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'User not logged in, try to login first.'}), 401
   try:
     task = task_schema.load(data)
     task.user_id = user_id
@@ -58,7 +58,7 @@ def create_task():
   except Exception as e:
     db.session.rollback()
     log.error(f'Error saving task for {task.user_id}: {str(e)}')
-    return jsonify({'message':'An error occurred while creating the task'}), 500
+    return jsonify({'error':'An error occurred while creating the task'}), 500
   
   return jsonify({'message':'Task created successfully', 'task': task_schema.dump(task)}), 201
 
@@ -68,14 +68,14 @@ def create_task():
 def update_task(id):
   data = request.get_json()
   if not data:
-    return jsonify({'message': 'No data provided'}), 400
+    return jsonify({'error': 'No data provided'}), 400
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'message': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'User not logged in, try to login first.'}), 401
 
   task = db.session.execute(db.select(Task).where(Task.id == id, Task.user_id == user_id)).scalar_one_or_none() # get task
   if not task: 
-    return jsonify({'message':'Task not found'}), 404
+    return jsonify({'error':'Task not found'}), 404
   
   try:
     task = task_update_schema.load(data, instance=task)
@@ -88,7 +88,7 @@ def update_task(id):
   except Exception as e:
     db.session.rollback()
     log.error(f'Error updating task for {task.user_id}: {str(e)}')
-    return jsonify({'message':'An error occurred while updating the task'}), 500
+    return jsonify({'error':'An error occurred while updating the task'}), 500
   
   return jsonify({'message': 'Task updated successfully', 'task': task_schema.dump(task)}), 200
 
@@ -98,13 +98,13 @@ def update_task(id):
 def delete_task(id):
   task = db.session.execute(db.select(Task).where(Task.user_id == get_current_user_id(), Task.id == id)).scalar_one_or_none()
   if not task:
-    return jsonify({'message': 'Task not found'}), 404
+    return jsonify({'error': 'Task not found'}), 404
   try:
     db.session.delete(task)
     db.session.commit()
   except Exception as e:
     db.session.rollback()
     log.error(f'Error deleting task {task.id}:{str(e)}')
-    return jsonify({'message': 'Error deleting task'}), 500
+    return jsonify({'error': 'Error deleting task'}), 500
   return '', 204
   
