@@ -42,7 +42,7 @@ class User(Base):
   def to_dict(self) -> dict:
     return {
             "id": self.id,
-            "full name": f"{self.first_name} {self.last_name}",
+            "full_name": f"{self.first_name} {self.last_name}",
             "email": self.email,
             "role": self.role.value,
             "tasks": [t.to_dict() for t in self.task] if self.task else []
