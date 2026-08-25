@@ -3,6 +3,7 @@ from sqlalchemy import String, ForeignKey, Enum as sqlalchemyEnum, func, DateTim
 from typing import Optional
 from datetime import datetime
 import enum
+
 # from model.user import User
 from model.base import Base
 
@@ -46,7 +47,7 @@ class Task(Base):
   user: Mapped["User"] = relationship(back_populates='task')
   
   def __repr__(self) -> str:
-    duration_str = f" duration=({self.computed_duration()})" if self.computed_duration() else ""
+    duration_str = f" duration=({self.computed_duration})" if self.computed_duration else ""
     return f"id=({self.id}), title={self.title} priority={self.priority}{duration_str} {self.status.value}"
     
   @property
@@ -65,6 +66,6 @@ class Task(Base):
           "title": f"{self.title}",
           "priority": self.priority.value,
           "status": self.status.value,
-          "duration": self.computed_duration() if self.start_time and self.end_time else None,
+          "duration": self.computed_duration,
           "created_at": self.created_at
         }

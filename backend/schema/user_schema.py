@@ -1,10 +1,11 @@
 from app.extensions import ma
 from marshmallow.validate import Length, Regexp
+from marshmallow_sqlalchemy import SQLAlchemySchema
 from model import User
 # from schema import task_schema
 from db import db
 
-class UserSchema(ma.Schema):
+class UserSchema(SQLAlchemySchema):
   class Meta:
     model = User
     load_instance = True

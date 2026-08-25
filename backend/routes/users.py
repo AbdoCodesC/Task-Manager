@@ -9,6 +9,7 @@ from services.user_service import create_user_logic
 # from flask_login import login_required, current_user
 from utils.auth_helpers import get_current_user
 from flask_jwt_extended import jwt_required
+from marshmallow import ValidationError
 
 user_bp = Blueprint('users', __name__)
 
@@ -17,7 +18,7 @@ user_bp = Blueprint('users', __name__)
 @jwt_required()
 def get_users():
   user = get_current_user()
-  if not user.is_admin():
+  if not user or not user.is_admin():
     return jsonify({'error':'Unauthorized'}), 403
   users = db.session.execute(db.select(User).order_by(User.id)).scalars().all()
   if not users:
@@ -34,20 +35,6 @@ def get_user(id):
     return jsonify({'error': 'Unauthorized'}), 403
   return jsonify({'user': user.to_dict()}), 200
 
-'''
-# get user by email
-@user_bp.route('/users')
-def get_user_by_email():
-  data = request.get_json()
-  if not data:
-    return jsonify({'message': 'No data provided'}), 400
-  email = data.get('email', '')
-  user, error, status = get_user_by_email_logic(email)
-  if error:
-    return jsonify(error), status
-  return jsonify({'user': user.to_dict()}), 200
-'''
-
 # create user - use for (signup) auth
 @user_bp.route('/', methods=['POST'])
 def create_user():
@@ -56,7 +43,7 @@ def create_user():
     return jsonify({'error': 'No data provided'}), 400
   user, error, status = create_user_logic(data)
   if error:
-    return jsonify({"error": error}), status 
+    return jsonify(error), status 
 
   try:
     db.session.add(user)
@@ -86,13 +73,14 @@ def update_user(id):
       return jsonify({'error':'Email already exists'}), 400
   
   try:
-    user = user_update_schema.load(data, instance=user)
-  except ma.ValidationError as error:
+    user_update_schema.load(data, instance=user)
+  except ValidationError as error:
     log.error(f'Error updating user: {str(error.messages)}')
     return jsonify({'errors': str(error.messages)}), 400
 
   if 'password' in data:
     user.password = hash_password(data['password'])
+  print('user --> ', user)
   
   try:
     db.session.commit()

@@ -6,6 +6,7 @@ from db import db
 from app.app import log
 from app.extensions import ma
 from utils.auth_helpers import get_current_user_id
+from marshmallow import ValidationError
 
 task_bp = Blueprint('tasks', __name__)
 
@@ -16,7 +17,7 @@ def get_tasks():
   # get current_user id
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'error': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'Unauthorized'}), 401
   
   tasks = db.session.execute(db.select(Task).where(Task.user_id == user_id).order_by(Task.id)).scalars().all()
   if not tasks:
@@ -30,7 +31,7 @@ def get_tasks():
 def get_task(id):
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'error': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'Unauthorized'}), 401
   task = db.session.execute(db.select(Task).where(Task.user_id == user_id, Task.id == id)).scalar_one_or_none()
   if not task:
     return jsonify({'error': 'Task not found'}), 404
@@ -45,13 +46,15 @@ def create_task():
     return jsonify({'error': 'No data provided'}), 400
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'error': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'Unauthorized'}), 401
+  
+  data['user_id'] = user_id
+  print(data)
   try:
     task = task_schema.load(data)
-    task.user_id = user_id
-  except ma.ValidationError as error:
+  except ValidationError as error:
     return jsonify({'error': str(error.messages)}), 400
-  
+
   try:
     db.session.add(task)
     db.session.commit()
@@ -71,15 +74,22 @@ def update_task(id):
     return jsonify({'error': 'No data provided'}), 400
   user_id = get_current_user_id()
   if not user_id:
-    return jsonify({'error': 'User not logged in, try to login first.'}), 401
+    return jsonify({'error': 'Unauthorized'}), 401
 
   task = db.session.execute(db.select(Task).where(Task.id == id, Task.user_id == user_id)).scalar_one_or_none() # get task
   if not task: 
     return jsonify({'error':'Task not found'}), 404
   
+  exclude = ['title', 'start_time', 'updated_at', 'end_time', 'completed_at', 'id']
+  for k, v in data.items():
+    if k in exclude:
+      continue
+    data[k] = v.lower()
+    print(k, data[k])
+  
   try:
-    task = task_update_schema.load(data, instance=task)
-  except ma.ValidationError as error:
+    task_update_schema.load(data, instance=task)
+  except ValidationError as error:
     log.error(f'Error updating task: {str(error)}')
     return jsonify({'error': str(error.messages)})
   

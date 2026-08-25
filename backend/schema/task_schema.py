@@ -1,11 +1,12 @@
 from app.extensions import ma
 from model import Task
 from model.task import TaskPriority, TaskStatus
+from marshmallow_sqlalchemy import SQLAlchemySchema
 from marshmallow.validate import Length
 from db import db
 # from schema import user_schema
 
-class TaskSchema(ma.Schema):
+class TaskSchema(SQLAlchemySchema):
   class Meta:
     model = Task
     load_instance = True

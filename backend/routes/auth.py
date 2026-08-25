@@ -42,8 +42,7 @@ def login():
   
   user, error, status = get_user_by_email_logic(email)
   if error:
-    print('here!')
-    return jsonify({'error': 'Invalid email or password'}), status
+    return jsonify(error), status
 
   if not user.check_password(password):
     return jsonify({'error': 'Invalid email or password'}), 401
