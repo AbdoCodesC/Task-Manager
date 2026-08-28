@@ -10,10 +10,7 @@ def get_current_user():
   except (ValueError, TypeError):
     return None
   
-def get_current_user_id():
-  try:
-    user_id = get_jwt_identity()
-    return int(user_id) if user_id else None
-  except (ValueError, TypeError):
-    return None
+# def get_current_user_id():
+#   user = get_current_user()
+#   return user.id
     

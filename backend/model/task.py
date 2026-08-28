@@ -1,5 +1,5 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Enum as sqlalchemyEnum, func, DateTime
+from sqlalchemy import String, ForeignKey, Enum as sqlalchemyEnum, func, DateTime, Text
 from typing import Optional
 from datetime import datetime
 import enum
@@ -33,6 +33,7 @@ class Task(Base):
   __tablename__ = 'tasks'
   id: Mapped[int] = mapped_column(primary_key=True)
   title: Mapped[str] = mapped_column(String(100))
+  description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
   priority: Mapped[TaskPriority] = mapped_column(sqlalchemyEnum(TaskPriority), default=TaskPriority.MEDIUM)
   status: Mapped[TaskStatus] = mapped_column(sqlalchemyEnum(TaskStatus), default=TaskStatus.PENDING)
   
@@ -63,9 +64,20 @@ class Task(Base):
   def to_dict(self):
     return {
           "id": self.id,
-          "title": f"{self.title}",
+          
+          "title": self.title,
+          "description": self.description,
+          
           "priority": self.priority.value,
           "status": self.status.value,
-          "duration": self.computed_duration,
-          "created_at": self.created_at
+
+          'start_time': self.start_time.isoformat() if self.start_time else None,
+          'end_time': self.end_time.isoformat() if self.end_time else None,
+          'duration': self.computed_duration, 
+          
+          "created_at": self.created_at,
+          'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+          'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+          
+          "user_id": self.user_id
         }

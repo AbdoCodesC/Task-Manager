@@ -14,6 +14,7 @@ class TaskSchema(SQLAlchemySchema):
   
   id = ma.Integer(dump_only=True)
   title = ma.String(required=True, validate=Length(min=1, max=100))
+  description = ma.String(required=False, allow_none=True, validate=Length(max=1000, error="Reached max character limit for description"))
   priority = ma.Enum(enum=TaskPriority, by_value=True)
   status = ma.Enum(enum=TaskStatus, by_value=True)
   start_time = ma.DateTime(required=False, allow_none=True)

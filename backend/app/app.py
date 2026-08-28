@@ -20,7 +20,7 @@ def create_app():
   app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
   app.config['JWT_SECRET_KEY'] = os.getenv("JWT_SECRET", 'secret') 
   app.config['JWT_ACCESS_TOKEN_EXPIRES'] = timedelta(minutes=15)
-  CORS(app, origins=["http://localhost:5173"])
+  CORS(app, origins=["http://localhost:5173", "*"], allow_headers=["Authorization", "Content-Type"], supports_credentials=True)
   
   
   jwt_manager.init_app(app)
@@ -31,8 +31,8 @@ def create_app():
   # Order matters: Initialize SQLAlchemy before Marshmallow
   ma.init_app(app)
   
-  app.register_blueprint(user_bp, url_prefix='/api/users')
-  app.register_blueprint(task_bp, url_prefix='/api/tasks')
+  app.register_blueprint(user_bp, url_prefix='/api')
+  app.register_blueprint(task_bp, url_prefix='/api')
   app.register_blueprint(auth_bp, url_prefix='/api/auth')
   app.register_blueprint(health_bp, url_prefix='/api/health')
   
