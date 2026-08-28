@@ -6,11 +6,13 @@ export interface User {
 }
 
 export interface Task {
+  id: number,
   title: string,
   priority?: "low" | "medium" | "high",
   status?: "pending" | "in_progress" | "completed",
   start_time?: Date,
   end_time?: Date,
+  duration?: number
 }
 
 // AUTH
@@ -27,4 +29,9 @@ export interface LoginResponse {
   }
 };
 
-// export type 
+// Lucid
+export interface LucideProps {
+  size?: number,
+  color?: string,
+  strokeWidth?: number
+}

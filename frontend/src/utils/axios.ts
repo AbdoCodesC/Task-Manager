@@ -5,6 +5,19 @@ import type { LoginResponse } from "../types/index";
 const API_URL: string =
   import.meta.env.VITE_API_URL || console.log("url not injected.");
 
+// const api = axios.create({
+//   baseURL: API_URL,
+// });
+
+// api.interceptors.request.use((config) => {
+//   const token = localStorage.getItem("token");
+//   if (token) {
+//     config.headers.Authorization = `Bearer ${token}`;
+//     console.log("Token used!!");
+//   }
+//   return config;
+// });
+
 // AUTH
 // AUTH
 // - login
@@ -26,7 +39,9 @@ export async function login(data: {
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const message =
-        error.response?.data?.error || "Login failed, please try again.";
+        error.response?.data?.error ||
+        error ||
+        "Login failed, please try again.";
       throw new Error(message);
     }
     throw new Error("Network error. Please check your connection");
@@ -40,11 +55,11 @@ export async function signup(data: {
   last_name: string;
   email: string;
   password: string;
-}): Promise<LoginResponse | Error | void> {
+}): Promise<LoginResponse | void> {
   try {
     const response = await axios.post<LoginResponse>(
       `${API_URL}/auth/signup`,
-      data
+      data,
     );
     console.log(response);
     if (response.status === 201) {
@@ -53,7 +68,9 @@ export async function signup(data: {
   } catch (error) {
     if (axios.isAxiosError(error)) {
       const message =
-        error.response?.data?.error || "Signup failed, please try again.";
+        error.response?.data?.error ||
+        error ||
+        "Signup failed, please try again.";
       throw new Error(message);
     }
     throw new Error("Network error. Please check your connection");
@@ -61,13 +78,53 @@ export async function signup(data: {
 }
 
 // - logout
+export async function logout(): Promise<void> {
+  try {
+    const response = await axios.post(`${API_URL}/auth/logout`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    if (response.status === 200) {
+      localStorage.removeItem("token");
+      return;
+    }
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      const message =
+        error.response?.data?.error ||
+        error ||
+        "Signup failed, please try again.";
+      throw new Error(message);
+    }
+    throw new Error("Network error. Please check your connection");
+  }
+}
 
 // TASKS
 export async function getTasks(): Promise<Task[]> {
-  const response = await axios.get(`${API_URL}/tasks`);
-  let data = response.data;
-  console.log(response, "  ", data);
-  return response.data;
+  try {
+    console.log(`${API_URL}/tasks`);
+    // return []
+    const response = await axios.get(`${API_URL}/tasks`, {
+      headers: {
+        Authorization: `Bearer ${localStorage.getItem("token")}`,
+      },
+    });
+    const data = await response?.data;
+    console.log(response, "  ", data);
+    if (data && Array.isArray(data.tasks)) return data.tasks as Task[];
+    if (Array.isArray(data)) {
+      return data as Task[];
+    }
+    return [];
+  } catch (error) {
+    if (axios.isAxiosError(error)) {
+      console.log(error);
+      throw new Error(error.message);
+    }
+    throw new Error("Network error. Please check your connection");
+  }
 }
 
 export async function getTask(id: number): Promise<Task> {
@@ -81,10 +138,7 @@ type PostTaskResponse = Task & { id: number };
 
 export async function addTask(data: Task): Promise<PostTaskResponse> {
   console.log(data);
-  const response = await axios.post<PostTaskResponse>(
-    `${API_URL}/tasks/`,
-    data,
-  );
+  const response = await axios.post<PostTaskResponse>(`${API_URL}/tasks`, data);
   return response.data;
 }
 

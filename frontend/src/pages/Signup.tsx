@@ -1,10 +1,11 @@
 import React from "react";
 import { useNavigate } from "react-router";
 import { signup } from "../utils/axios";
+import { info } from "../utils/toast";
 
-function Register() {
+function Signup() {
   const navigate = useNavigate();
-  async function registerHandler(e: React.FormEvent<HTMLFormElement>) {
+  async function signupHandler(e: React.FormEvent<HTMLFormElement>) {
     e.preventDefault();
     const form_data = new FormData(e.currentTarget);
     const first_name = form_data.get("first_name")?.toString().trim();
@@ -14,24 +15,24 @@ function Register() {
     if (!first_name || !last_name || !email || !password) return;
     try {
       const data = await signup({ first_name, last_name, email, password });
-      console.log(data);
-      localStorage.setItem("cookie", data["access_token"]);
-      navigate("/home");
+      localStorage.setItem("token", data["access_token"]);
+      info(`Welcome, ${data["user"]?.full_name}`);
+      navigate("/task");
     } catch (error) {
       console.log(error);
     }
   }
   return (
-    <div className="flex flex-col justify-center min-h-screen bg-gray-50">
+    <div className="flex flex-col justify-center min-h-screen bg-gray-100">
       <div className="font-bold text-2xl mb-8 self-center">
         Welcome to the <u>one and only</u> "TASK MANAGER"
       </div>
-      <div className="flex flex-col border-solid self-center border-gray-100 border w-[50%] p-10 items-center rounded-xl">
+      <div className="flex flex-col border-solid self-center border-gray-100 border w-[50%] p-10 items-center rounded-xl bg-gray-100 shadow-gray shadow-md/20">
         <div className="flex justify-center w-full max-w-md px-4">
           <form
             method="POST"
             onSubmit={(e: React.FormEvent<HTMLFormElement>) =>
-              registerHandler(e)
+              signupHandler(e)
             }
             className="w-full"
           >
@@ -95,4 +96,4 @@ function Register() {
   );
 }
 
-export default Register;
+export default Signup;
