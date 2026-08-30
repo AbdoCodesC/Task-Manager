@@ -10,6 +10,9 @@ export interface Task {
   title: string,
   priority?: "low" | "medium" | "high",
   status?: "pending" | "in_progress" | "completed",
+  date?: string,
+  userImg?: string,
+  project?: string
   start_time?: Date,
   end_time?: Date,
   duration?: number
