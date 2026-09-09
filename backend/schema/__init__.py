@@ -1,2 +1,9 @@
-from schema.task_schema import task_schema, task_update_schema
-from schema.user_schema import user_schema, user_update_schema
+from .task_schema import task_schema, task_update_schema
+from .user_schema import user_schema, user_update_schema
+from .comment_schema import comment_schema, comment_update_schema
+from .project_schema import project_schema, project_update_schema
+from .task_activity_schema import task_activity_schema, task_activity_update_schema
+from .workspace_schema import workspace_schema, workspace_update_schema
+from .workspace_member_schema import workspace_member_schema, workspace_member_update_schema
+from .workspace_invitation_schema import workspace_invitation_schema, workspace_invitation_update_schema
+from .time_block_schema import time_block_schema, time_block_update_schema
