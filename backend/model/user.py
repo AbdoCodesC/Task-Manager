@@ -11,10 +11,10 @@ class User(Base):
   __tablename__ = 'users'
   
   id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-  first_name: Mapped[str] = mapped_column(String(30))
-  last_name: Mapped[str] = mapped_column(String(30))
-  email: Mapped[str] = mapped_column(String(100), unique=True)
-  password_hash: Mapped[str] = mapped_column(String(255)) # Hashed password
+  first_name: Mapped[str] = mapped_column(String(30), nullable=False)
+  last_name: Mapped[str] = mapped_column(String(30), nullable=False)
+  email: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
+  password_hash: Mapped[str] = mapped_column(String(255), nullable=False) # Hashed password
   
   created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
   updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -36,5 +36,6 @@ class User(Base):
             "id": self.id,
             "full_name": f"{self.first_name} {self.last_name}",
             "email": self.email,
+            "created_at": self.created_at
             }
   

@@ -6,7 +6,7 @@ from model.base import Base
 from typing import Optional
 import enum
 
-class Status(enum.Enum):
+class ProjectStatus(enum.Enum):
   TODO = 'todo'
   IN_PROGRESS = 'in_progress'
   COMPLETED = 'completed'
@@ -17,7 +17,7 @@ class Project(Base):
   id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
   name: Mapped[str] = mapped_column(String(100), unique=True, nullable=False)
   description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-  status: Mapped[enum.Enum] = mapped_column(SAEnum(Status), default=Status.TODO)
+  status: Mapped[enum.Enum] = mapped_column(SAEnum(ProjectStatus), default=ProjectStatus.TODO)
   
   created_at: Mapped[datetime]  = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
   updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))

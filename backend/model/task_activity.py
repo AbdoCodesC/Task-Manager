@@ -2,12 +2,9 @@ import uuid
 import enum
 from datetime import datetime, timezone
 from typing import Optional
-
 from sqlalchemy import UUID, DateTime, ForeignKey, JSON, String, Text, Enum as SAEnum
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-
 from model.base import Base
-
 
 class ActivityType(str, enum.Enum):
   CREATED = 'created'

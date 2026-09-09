@@ -34,10 +34,9 @@ class WorkspaceInvitation(Base):
   accepted_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
   
   workspace_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('workspaces.id'), nullable=False)
-  
   invited_by_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey("users.id"), nullable=False)
-  invited_by: Mapped['User'] = relationship(back_populates="sent_invitations")
 
+  invited_by: Mapped['User'] = relationship(back_populates="sent_invitations")
   workspace: Mapped['Workspace'] = relationship(back_populates='invitations')
   
   
