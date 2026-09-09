@@ -1,40 +1,32 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, func, Enum as SAEnum
-from typing import List
-import enum
-from datetime import datetime
+import uuid
+from sqlalchemy import String, UUID, DateTime
+from datetime import datetime, timezone
 # from model.task import Task
 from model.base import Base
 from app.extensions import bcrypt
 
-class UserRole(enum.Enum):
-  USER = 'user'
-  ADMIN = 'admin'
-  MODERATOR = 'moderator' # only use for specific ppl
-  
+
 class User(Base):
   __tablename__ = 'users'
   
-  id: Mapped[int] = mapped_column(primary_key=True)
+  id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
   first_name: Mapped[str] = mapped_column(String(30))
   last_name: Mapped[str] = mapped_column(String(30))
-  email: Mapped[str] = mapped_column(String(50), unique=True)
-  password: Mapped[str] = mapped_column(String(255)) # Hashed password
-  role: Mapped[UserRole] = mapped_column(SAEnum(UserRole, valuescallable=lambda x: [e.value for e in x]), default=UserRole.USER)
+  email: Mapped[str] = mapped_column(String(100), unique=True)
+  password_hash: Mapped[str] = mapped_column(String(255)) # Hashed password
   
-  created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-  updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
+  created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+  updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
   
-  task: Mapped[List["Task"]] = relationship(back_populates='user', cascade='all, delete-orphan')
-  
+  owned_workspaces: Mapped[list["Workspace"]] = relationship(back_populates='owner')
+  workspace_memberships: Mapped[list['WorkspaceMember']] = relationship(back_populates='user', cascade='all, delete-orphan')
+
+  sent_invitations: Mapped[list['WorkspaceInvitation']] = relationship(back_populates="invited_by")
+  activities: Mapped[list['TaskActivity']] = relationship(back_populates='user')
+    
   def check_password(self, password):
-    return bcrypt.check_password_hash(self.password, password)
-  
-  def is_admin(self):
-    return self.role == UserRole.ADMIN
-  
-  def is_mod(self):
-    return self.role == UserRole.MODERATOR
+    return bcrypt.check_password_hash(self.password_hash, password)
   
   def __repr__(self) -> str:
     return f"User(id={self.id!r}, email={self.email}, fullname={self.first_name} {self.last_name})"
@@ -44,7 +36,5 @@ class User(Base):
             "id": self.id,
             "full_name": f"{self.first_name} {self.last_name}",
             "email": self.email,
-            "role": self.role.value,
-            "tasks": [t.to_dict() for t in self.task] if self.task else []
             }
   

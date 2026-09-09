@@ -1,83 +1,62 @@
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from sqlalchemy import String, ForeignKey, Enum as sqlalchemyEnum, func, DateTime, Text
+from sqlalchemy import String, ForeignKey, Enum as SAEnum, DateTime, Text, UUID
 from typing import Optional
-from datetime import datetime
+from datetime import datetime, timezone
+import uuid
 import enum
 
 # from model.user import User
 from model.base import Base
 
-class TaskPriority(enum.Enum):
-  HIGH = 'high'
-  MEDIUM = 'medium'
-  LOW = 'low'
+class TaskPriority(str, enum.Enum):
+  LOW = "low"
+  MEDIUM = "medium"
+  HIGH = "high"
+  URGENT = "urgent"
   
-  @classmethod
-  def choices(cls):
-    return [priority.value for priority in cls]
+class TaskStatus(str, enum.Enum):
+  TODO = "todo"
+  IN_PROGRESS = "in_progress"
+  DONE = "done"
+  ARCHIVED = "archived"
   
-class TaskStatus(enum.Enum):
-  PENDING = 'pending'
-  IN_PROGRESS = 'in_progress'
-  COMPLETED = 'completed'
-  
-  @classmethod
-  def choices(cls):
-    return [status.value for status in cls]
-
-'''
-task - id, title, duration, created_at, priority
-'''
-
 class Task(Base):
   __tablename__ = 'tasks'
-  id: Mapped[int] = mapped_column(primary_key=True)
-  title: Mapped[str] = mapped_column(String(100))
+  id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+  title: Mapped[str] = mapped_column(String(100), nullable=False)
   description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
-  priority: Mapped[TaskPriority] = mapped_column(sqlalchemyEnum(TaskPriority), default=TaskPriority.MEDIUM)
-  status: Mapped[TaskStatus] = mapped_column(sqlalchemyEnum(TaskStatus), default=TaskStatus.PENDING)
+  priority: Mapped[TaskPriority] = mapped_column(SAEnum(TaskPriority), default=TaskPriority.MEDIUM, nullable=False)
+  status: Mapped[TaskStatus] = mapped_column(SAEnum(TaskStatus), default=TaskStatus.TODO, nullable=False)
   
-  start_time: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
-  end_time: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
+  created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
+  updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
+  completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(timezone=True), nullable=True)
   
-  created_at: Mapped[datetime] = mapped_column(server_default=func.now())
-  updated_at: Mapped[datetime] = mapped_column(server_default=func.now(), onupdate=func.now())
-  completed_at: Mapped[Optional[datetime]] = mapped_column(DateTime(), nullable=True)
+  # FK
+  project_id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), ForeignKey('projects.id'), nullable=False)
   
-  user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-  user: Mapped["User"] = relationship(back_populates='task')
+  # 
+  project: Mapped['Project'] = relationship(back_populates='tasks')
+  time_blocks: Mapped[list['TimeBlock']] = relationship(back_populates='task', cascade='all, delete-orphan')
+  comments: Mapped[list['Comment']] = relationship(back_populates='task', cascade='all, delete-orphan')
+  activities: Mapped[list['TaskActivity']] = relationship(back_populates='task', cascade='all, delete-orphan')
   
   def __repr__(self) -> str:
-    duration_str = f" duration=({self.computed_duration})" if self.computed_duration else ""
-    return f"id=({self.id}), title={self.title} priority={self.priority}{duration_str} {self.status.value}"
-    
-  @property
-  def computed_duration(self) -> Optional[int]:
-    if self.start_time and self.end_time:
-      return int((self.end_time - self.start_time).total_seconds())
-    return None
+    return f"id=({self.id}), title={self.title} priority={self.priority} {self.status.value}"
 
   @property
   def is_complete(self):
-    return self.status == TaskStatus.COMPLETED
+    return self.status == TaskStatus.DONE
 
-  def to_dict(self):
+  def to_dict(self) -> dict:
     return {
           "id": self.id,
-          
           "title": self.title,
           "description": self.description,
-          
           "priority": self.priority.value,
           "status": self.status.value,
-
-          'start_time': self.start_time.isoformat() if self.start_time else None,
-          'end_time': self.end_time.isoformat() if self.end_time else None,
-          'duration': self.computed_duration, 
-          
           "created_at": self.created_at,
-          'updated_at': self.updated_at.isoformat() if self.updated_at else None,
+          'updated_at': self.updated_at.isoformat(),
           'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-          
-          "user_id": self.user_id
+          "project_id": str(self.project_id)
         }
