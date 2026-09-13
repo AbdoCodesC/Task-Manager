@@ -21,7 +21,7 @@ class TaskSchema(SQLAlchemySchema):
   completed_at = ma.DateTime(required=False, allow_none=True)
   created_at = ma.DateTime(dump_only=True)
   updated_at = ma.DateTime(dump_only=True)
-  project_id = ma.UUID(required=True)
+  project_id = ma.UUID(dump_only=True)
   
   project = ma.Nested('ProjectSchema', dump_only=True)
   time_blocks = ma.Nested('TimeBlockSchema', many=True, dump_only=True)

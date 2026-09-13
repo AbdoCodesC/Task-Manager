@@ -16,7 +16,7 @@ class ProjectSchema(SQLAlchemySchema):
   status = ma.Enum(ProjectStatus, by_value=True, required=True)
   created_at = ma.DateTime(dump_only=True)
   updated_at = ma.DateTime(dump_only=True)
-  workspace_id = ma.UUID(required=True)
+  workspace_id = ma.UUID(dump_only=True)
   
   workspace = ma.Nested('WorkspaceSchema', dump_only=True)
   tasks = ma.Nested('TaskSchema', many=True, dump_only=True)

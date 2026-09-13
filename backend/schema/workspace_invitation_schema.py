@@ -13,7 +13,7 @@ class WorkspaceInvitationSchema(SQLAlchemySchema):
   email = ma.Email(required=True)
   role = ma.Enum(WorkspaceRole, by_value=True, required=True)
   status = ma.Enum(InvitationStatus, by_value=True, required=True)
-  token = ma.UUID(required=True, dump_only=True)
+  token = ma.UUID(required=True)
   
   expires_at = ma.DateTime(dump_only=True, required=True)
   created_at = ma.DateTime(dump_only=True)
