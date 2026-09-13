@@ -50,13 +50,12 @@ class Task(Base):
 
   def to_dict(self) -> dict:
     return {
-          "id": self.id,
-          "title": self.title,
-          "description": self.description,
-          "priority": self.priority.value,
-          "status": self.status.value,
-          "created_at": self.created_at,
-          'updated_at': self.updated_at.isoformat(),
-          'completed_at': self.completed_at.isoformat() if self.completed_at else None,
-          "project_id": str(self.project_id)
-        }
+      "id": str(self.id),
+      "title": self.title,
+      "description": self.description,
+      "priority": self.priority.value,
+      "status": self.status.value,
+      "created_at": self.created_at,
+      'completed_at': self.completed_at.isoformat() if self.completed_at else None,
+      "project_id": str(self.project_id)
+    }

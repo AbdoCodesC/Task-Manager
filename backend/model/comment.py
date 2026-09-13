@@ -19,9 +19,9 @@ class Comment(Base):
   
   def to_dict(self):
     return {
-      "id": self.id,
-      "message": self.message,
-      "task_id": self.task_id,
-      "user_id": self.user_id,
-      "created_at": self.created_at
-    }
+    "id": str(self.id),
+    "message": self.message,
+    "task_id": str(self.task_id),
+    "user_id": str(self.user_id),
+    "created_at": self.created_at.isoformat(),
+  }

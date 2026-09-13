@@ -29,9 +29,8 @@ class Workspace(Base):
   
   def to_dict(self) -> dict:
     return {
-      'id': self.id,
+      'id': str(self.id),
       'name': self.name,
       'slug': self.slug,
-      'owner_id': self.owner_id,
-      "projects": self.projects
+      'owner_id': str(self.owner_id),
     }

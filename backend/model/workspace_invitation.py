@@ -3,7 +3,6 @@ from datetime import datetime, timezone
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 from sqlalchemy import UUID, String, ForeignKey, Enum as SAEnum, DateTime, UniqueConstraint
 from typing import Optional
-from sqlalchemy.dialects.postgresql import TIMESTAMP
 from model.base import Base
 import enum
 
@@ -42,14 +41,13 @@ class WorkspaceInvitation(Base):
   
   def to_dict(self) -> dict:
     return {
-      'id': self.id,
-      'role': self.role,
-      'invited_by': self.invited_by,
-      'invited_by_id': self.invited_by_id,
-      "workspace_id": self.workspace_id,
+      'id': str(self.id),
+      'role': self.role.value,
+      'invited_by_id': str(self.invited_by_id),
+      "workspace_id": str(self.workspace_id),
       "email": self.email,
-      "status": self.status,
-      "token": self.token,
+      "status": self.status.value,
+      "token": str(self.token),
       "expires_at": self.expires_at,
       "accepted_at": self.accepted_at
     }

@@ -33,9 +33,9 @@ class User(Base):
   
   def to_dict(self) -> dict:
     return {
-            "id": self.id,
-            "full_name": f"{self.first_name} {self.last_name}",
-            "email": self.email,
-            "created_at": self.created_at
-            }
+      "id": str(self.id),
+      "full_name": f"{self.first_name} {self.last_name}",
+      "email": self.email,
+      "created_at": self.created_at
+      }
   

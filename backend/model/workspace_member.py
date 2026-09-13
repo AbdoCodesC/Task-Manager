@@ -5,7 +5,7 @@ from model.base import Base
 import uuid
 import enum
 
-class MemberRole(enum.Enum):
+class MemberRole(str, enum.Enum):
   OWNER = 'owner'
   ADMIN = 'admin'
   MEMBER = 'member'
@@ -33,10 +33,10 @@ class WorkspaceMember(Base):
   
   def to_dict(self) -> dict:
     return {
-      'id': self.id,
-      'role': self.role,
-      'user_id': self.user_id,
-      "workspace_id": self.workspace_id,
+      'id': str(self.id),
+      'role': self.role.value,
+      'user_id': str(self.user_id),
+      "workspace_id": str(self.workspace_id),
       "joined_at": self.joined_at
     }
   
