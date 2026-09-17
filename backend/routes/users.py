@@ -1,110 +1,74 @@
+import logging
 from flask import Blueprint, request, jsonify
-from model import User
 from db import db
-from app.extensions import ma
-from app.app import log
-from schema import user_update_schema
-from utils.user_helper import email_exists, hash_password
-from services.user_service import create_user_logic
-# from flask_login import login_required, current_user
 from utils.auth_helpers import get_current_user
 from flask_jwt_extended import jwt_required
 from marshmallow import ValidationError
+from services.user_service import UserServiceError, update_me, delete_me, get_me
+from app.extensions import limiter
+from sqlalchemy.exc import IntegrityError
 
-user_bp = Blueprint('users', __name__)
+user_bp = Blueprint('user', __name__)
+log = logging.getLogger(__name__)
 
-# get all users - admin OR create user
-@user_bp.route('/users')
+@user_bp.route('/users/me')
 @jwt_required()
-def get_users():
-  user = get_current_user()
-  if not user or not user.is_admin():
-    return jsonify({'error':'Unauthorized'}), 403
-  users = db.session.execute(db.select(User).order_by(User.id)).scalars().all()
-  if not users:
-    return jsonify({'users':[]}), 200
-  return jsonify({'users': [user.to_dict() for user in users]}), 200
-
-# get one user
-@user_bp.route('/users/<int:id>')
-@jwt_required()
-def get_user(id):
+@limiter.limit('60 per hour')
+def get_profile_route():
   current_user = get_current_user()
-  user = db.get_or_404(User, id)
-  if not current_user or (current_user.id != user.id and not current_user.is_admin()):
-    return jsonify({'error': 'Unauthorized'}), 403
+
+  try:
+    user = get_me(current_user)
+  except UserServiceError as e:
+    return jsonify({'error': str(e)}), e.status_code
+  except Exception as e:
+    log.error(f'Error listing profile for user {current_user.id}: {e}')
+    return jsonify({'error': f'An error occured while listing user\'s profile'}), 500
+
   return jsonify({'user': user.to_dict()}), 200
 
-# create user - use for (signup) auth
-@user_bp.route('/users', methods=['POST'])
-def create_user():
-  data = request.get_json()
-  if not data:
-    return jsonify({'error': 'No data provided'}), 400
-  user, error, status = create_user_logic(data)
-  if error:
-    return jsonify(error), status 
-
-  try:
-    db.session.add(user)
-    db.session.commit()
-  except Exception as e:
-    db.session.rollback()
-    log.error(f'Error creating user {user.id}: {str(e)}')
-    return jsonify({'error': 'An error occured while creating the user'}), 500
-  
-  return jsonify({'message': 'User created successfully.', 'user': user.to_dict()}), 201
-    
-# update user #TODO
-@user_bp.route('/users/<int:id>', methods=['PATCH'])
+@user_bp.route('/users/me', methods=['PATCH'])
 @jwt_required()
-def update_user(id):
-  data = request.get_json()
+@limiter.limit("30 per hour")
+def update_profile_route():
+  data = request.get_json(silent=True)
   if not data:
     return jsonify({'error': 'No data provided'}), 400
-  
-  user = db.get_or_404(User, id)
-  current_user = get_current_user()
-  if not current_user or (current_user.id != user.id and not current_user.is_admin()):
-    return jsonify({'error': 'Unauthorized'}), 403
-    
-  if 'email' in data:
-    if data['email'] != user.email and email_exists(data['email']):
-      return jsonify({'error':'Email already exists'}), 400
-  
-  try:
-    user_update_schema.load(data, instance=user)
-  except ValidationError as error:
-    log.error(f'Error updating user: {str(error.messages)}')
-    return jsonify({'errors': str(error.messages)}), 400
 
-  if 'password' in data:
-    user.password = hash_password(data['password'])
-  print('user --> ', user)
-  
+  current_user = get_current_user()
+
   try:
-    db.session.commit()
+    user = update_me(current_user.id, data, current_user)
+  except UserServiceError as e:
+    db.session.rollback()
+    return jsonify({'error': str(e)}), e.status_code
+  except ValidationError as e:
+    db.session.rollback()
+    return jsonify({'errors': e.messages}), 400
+  except IntegrityError as e:
+    db.session.rollback()
+    return jsonify({'errors': str(e)}), 400
   except Exception as e:
     db.session.rollback()
-    log.error(f'Error updating user {user.id}: {str(e)}')
-    return jsonify({'error': 'An error occured while updating the user'}), 500
+    log.error(f'Error updating user {current_user.id}: {e}')
+    return jsonify({'error': f'An error occured while updating user'}), 500
+
   return jsonify({'message':'User updated successfully','user': user.to_dict()}), 200
-  
-# delete user
-@user_bp.route('/users/<int:id>', methods=['DELETE'])
+
+@user_bp.route('/users/me', methods=['DELETE'])
 @jwt_required()
-def delete_user(id):
-  user = db.get_or_404(User, id)
+@limiter.limit('1 per hour')
+def delete_account_route():
   current_user = get_current_user()
-  if not current_user or (current_user.id != user.id and not current_user.is_admin()):
-    return jsonify({'error': 'Unauthorized'}), 403
-    
+
   try:
-    db.session.delete(user)
-    db.session.commit()
+    user = delete_me(current_user.id, current_user)
+  except UserServiceError as e:
+    db.session.rollback()
+    return jsonify({'error': str(e)}), e.status_code
   except Exception as e:
     db.session.rollback()
-    log.error(f'Error deleting user {user.id}: {str(e)}')
+    log.error(f'Error deleting user {current_user.id}: {str(e)}')
     return jsonify({'error': 'An error occured while deleting the user'}), 500
-    
+
   return '', 204
