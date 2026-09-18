@@ -10,6 +10,18 @@ class ProjectStatus(enum.Enum):
   TODO = 'todo'
   IN_PROGRESS = 'in_progress'
   COMPLETED = 'completed'
+  
+class ProjectCategory(str, enum.Enum):
+  HEALTH = "health"
+  PERSONAL = "personal"
+  WORK = "work"
+  LEARNING = "learning"
+  CAREER = "career"
+  CREATIVE = "creative"
+  LAUNCH = "launch"
+  RESEARCH = "research"
+  TEAM = "team"
+  HOME = "home"
 
 class Project(Base):
   __tablename__ = 'projects'
@@ -19,6 +31,15 @@ class Project(Base):
   name: Mapped[str] = mapped_column(String(100), nullable=False)
   description: Mapped[Optional[str]] = mapped_column(Text, nullable=True)
   status: Mapped[ProjectStatus] = mapped_column(SAEnum(ProjectStatus), default=ProjectStatus.TODO)
+  category: Mapped[ProjectCategory] = mapped_column(
+    SAEnum(
+      ProjectCategory,
+      name='project_category',
+      values_callable=lambda enum_class: [member.value for member in enum_class],
+    ),
+    nullable=False,
+    default=ProjectCategory.PERSONAL,
+  )
   
   created_at: Mapped[datetime]  = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc))
   updated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), default=lambda: datetime.now(timezone.utc), onupdate=lambda: datetime.now(timezone.utc))
@@ -36,6 +57,7 @@ class Project(Base):
         "name": self.name,
         "description": self.description,
         "status": self.status.value,
+        "category": self.category.value,
         "workspace_id": str(self.workspace_id),
     }
   

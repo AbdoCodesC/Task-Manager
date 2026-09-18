@@ -1,6 +1,5 @@
 from db import db
-from model import Project
-from model.project import ProjectStatus
+from model.project import Project, ProjectStatus, ProjectCategory
 from model.workspace_member import MemberRole
 from schema import project_schema, project_update_schema
 from marshmallow import ValidationError
@@ -44,14 +43,15 @@ def create_project(workspace_id, user, data):
   description = (data['description'].strip() if data.get('description') is not None else None)
   try:
     status = ProjectStatus(data.get('status', ProjectStatus.TODO.value))
+    category = ProjectCategory(data.get('category', ProjectCategory.PERSONAL.value))
   except ValueError:
-    raise ProjectServiceError('Invalid project status')
+    raise ProjectServiceError('Invalid project status or category')
   
-  errors = project_schema.validate({'name': name, 'description': description, 'status': status, 'workspace_id': workspace_id})
+  errors = project_schema.validate({'name': name, 'description': description, 'status': status,'category': category ,'workspace_id': workspace_id})
   if errors:
     raise ValidationError(errors)
   
-  project = Project(name=name, description=description, status=status, workspace_id=workspace_id)
+  project = Project(name=name, description=description, status=status, category=category, workspace_id=workspace_id)
   
   db.session.add(project)
   db.session.commit()
@@ -79,6 +79,8 @@ def update_project(workspace_id, project_id, user, data):
     project.description = (data["description"].strip() if data["description"] is not None else None)
   if 'status' in data:
     project.status = ProjectStatus(data['status'])
+  if 'category' in data:
+    project.category = ProjectCategory(data['category'])
   
   db.session.commit()
   
